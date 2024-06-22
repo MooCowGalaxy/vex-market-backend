@@ -1,0 +1,98 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int    @id @default(autoincrement())
+  email         String @unique @db.VarChar(255)
+  passwordHash  String @db.VarChar(255)
+  firstName     String @db.VarChar(60)
+  lastName      String @db.VarChar(60)
+  joinTimestamp Int
+
+  // if verifyToken exists, the user is not verified
+  verifyToken String? @unique @db.VarChar(128)
+
+  tokens      Token[]
+  posts       Post[]
+  sellerChats Chat[]  @relation("seller")
+  buyerChats  Chat[]  @relation("buyer")
+}
+
+model Token {
+  id    Int    @id @default(autoincrement())
+  token String @unique @db.VarChar(128)
+
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+}
+
+// model Post {
+//   id          Int    @id @default(autoincrement())
+//   title       String @db.VarChar(128)
+//   description String @db.VarChar(8000)
+//   price       Float
+//   lat         Float
+//   long        Float
+//
+//   archived Boolean @default(false)
+//
+//   author   User @relation(fields: [authorId], references: [id])
+//   authorId Int
+//
+//   images Image[]
+//   chats  Chat[]
+// }
+
+model Post {
+  id       Int     @id @default(autoincrement())
+  author   User    @relation(fields: [authorId], references: [id])
+  authorId Int
+  images   Image[]
+  chats    Chat[]
+}
+
+model Image {
+  id Int @id @default(autoincrement())
+
+  post    Post   @relation(fields: [postId], references: [id])
+  postId  Int
+  cdnLink String @db.VarChar(128)
+}
+
+model Chat {
+  id Int @id @default(autoincrement())
+
+  post   Post @relation(fields: [postId], references: [id])
+  postId Int
+
+  seller   User @relation("seller", fields: [sellerId], references: [id])
+  sellerId Int
+
+  buyer   User @relation("buyer", fields: [buyerId], references: [id])
+  buyerId Int
+
+  messages ChatMessage[]
+}
+
+model ChatMessage {
+  id Int @id @default(autoincrement())
+
+  chat   Chat @relation(fields: [chatId], references: [id])
+  chatId Int
+
+  authorId Int
+  message  String @db.VarChar(1000)
+  image    String @db.VarChar(100)
+}
