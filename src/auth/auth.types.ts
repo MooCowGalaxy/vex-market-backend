@@ -1,9 +1,8 @@
 import { z } from 'zod';
+import { Result } from '../types';
 
 // GET /auth/user
-export type GetUserResult = {
-    success: boolean;
-    error?: string;
+export type GetUserResult = Result & {
     firstName?: string;
     lastName?: string;
 };
@@ -18,11 +17,6 @@ export const loginSchema = z
 
 export type LoginBody = z.infer<typeof loginSchema>;
 
-export type LoginResult = {
-    success: boolean;
-    error?: string;
-};
-
 // POST /auth/register
 export const registerSchema = z
     .object({
@@ -35,11 +29,6 @@ export const registerSchema = z
 
 export type RegisterBody = z.infer<typeof registerSchema>;
 
-export type RegisterResult = {
-    success: boolean;
-    error?: string;
-};
-
 // POST /auth/verify
 export const verifySchema = z
     .object({
@@ -49,7 +38,20 @@ export const verifySchema = z
 
 export type VerifyBody = z.infer<typeof verifySchema>;
 
-export type VerifyResult = {
-    success: boolean;
-    error?: string;
-};
+// POST /auth/reset
+export const resetPasswordSchema = z
+    .object({
+        email: z.string().email()
+    })
+    .required();
+
+export type ResetPasswordBody = z.infer<typeof resetPasswordSchema>;
+
+// POST /auth/reset/:token
+export const useResetTokenSchema = z
+    .object({
+        password: z.string().min(8).max(200)
+    })
+    .required();
+
+export type UseResetTokenBody = z.infer<typeof useResetTokenSchema>;

@@ -25,14 +25,24 @@ model User {
   verifyToken String? @unique @db.VarChar(128)
 
   tokens      Token[]
+  resetTokens ResetToken[]
   posts       Post[]
-  sellerChats Chat[]  @relation("seller")
-  buyerChats  Chat[]  @relation("buyer")
+  sellerChats Chat[]       @relation("seller")
+  buyerChats  Chat[]       @relation("buyer")
 }
 
 model Token {
   id    Int    @id @default(autoincrement())
   token String @unique @db.VarChar(128)
+
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+}
+
+model ResetToken {
+  id      Int    @id @default(autoincrement())
+  token   String @unique @db.VarChar(128)
+  expires Int
 
   user   User @relation(fields: [userId], references: [id])
   userId Int
