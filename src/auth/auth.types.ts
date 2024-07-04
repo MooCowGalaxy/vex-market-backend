@@ -1,6 +1,14 @@
 import { z } from 'zod';
 import { Result } from '../types';
 
+export function passwordReq(password: string) {
+    return (
+        /[A-Z]/.test(password) &&
+        /[a-z]/.test(password) &&
+        /[0-9]/.test(password)
+    );
+}
+
 // GET /auth/user
 export type GetUserResult = Result & {
     firstName?: string;
@@ -21,7 +29,7 @@ export type LoginBody = z.infer<typeof loginSchema>;
 export const registerSchema = z
     .object({
         email: z.string().email(),
-        password: z.string().min(8).max(200),
+        password: z.string().min(8).max(200).refine(passwordReq),
         firstName: z.string().min(2).max(100),
         lastName: z.string().min(2).max(100)
     })
@@ -50,7 +58,7 @@ export type ResetPasswordBody = z.infer<typeof resetPasswordSchema>;
 // POST /auth/reset/:token
 export const useResetTokenSchema = z
     .object({
-        password: z.string().min(8).max(200)
+        password: z.string().min(8).max(200).refine(passwordReq)
     })
     .required();
 

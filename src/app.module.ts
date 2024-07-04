@@ -1,10 +1,13 @@
 import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AuthController } from './auth/auth.controller';
-import { PrismaService } from './prisma.service';
+import { PrismaService } from './db/prisma.service';
+import { AuthService } from './db/auth.service';
 import { ListingsController } from './listings/listings.controller';
 import { MeiliSearchModule } from 'nestjs-meilisearch';
-import { PrismaMiddleware } from './prisma.middleware';
+import { PrismaMiddleware } from './db/prisma.middleware';
+import { ListingsService } from './db/listings.service';
+import { LocationController } from './location/location.controller';
 
 @Module({
     imports: [
@@ -15,8 +18,8 @@ import { PrismaMiddleware } from './prisma.middleware';
             })
         })
     ],
-    controllers: [AppController, AuthController, ListingsController],
-    providers: [PrismaService]
+    controllers: [AppController, AuthController, ListingsController, LocationController],
+    providers: [PrismaService, AuthService, ListingsService]
 })
 export class AppModule {
     configure(consumer: MiddlewareConsumer) {

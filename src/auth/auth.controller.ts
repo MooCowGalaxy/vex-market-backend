@@ -8,24 +8,20 @@ import {
     Res,
     UsePipes
 } from '@nestjs/common';
-import { compare, hash } from 'bcrypt';
-import { randomBytes } from 'crypto';
 
-import { PrismaService } from '../prisma.service';
+import { AuthService } from '../db/auth.service';
 import * as types from './auth.types';
 import { Result } from '../types';
 import { ZodValidationPipe } from '../validation.pipe';
 import { Response } from 'express';
-import { sleep } from '../utils';
 import { AuthUser } from './auth.decorator';
 import { User } from '@prisma/client';
 
 @Controller('auth')
 export class AuthController {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(private readonly authService: AuthService) {}
 
     @Get('/user')
-    @HttpCode(200)
     async getUser(@AuthUser() user: User): Promise<types.GetUserResult> {
         return {
             success: true,
@@ -39,13 +35,9 @@ export class AuthController {
     @UsePipes(new ZodValidationPipe(types.loginSchema))
     async login(
         @Body() postData: types.LoginBody,
-        @Res() response: Response
+        @Res({ passthrough: true }) response: Response
     ): Promise<Result> {
-        const user = await this.prisma.user.findUnique({
-            where: {
-                email: postData.email
-            }
-        });
+        const user = await this.authService.findUserByEmail(postData.email);
 
         if (!user) {
             response.status(401);
@@ -55,9 +47,9 @@ export class AuthController {
             };
         }
 
-        const isValid = await compare(postData.password, user.passwordHash);
+        const token = await this.authService.login(user, postData.password);
 
-        if (!isValid) {
+        if (!token) {
             response.status(401);
             return {
                 success: false,
@@ -65,14 +57,15 @@ export class AuthController {
             };
         }
 
-        const token = randomBytes(64).toString('hex');
+        if (user.verifyToken !== null) {
+            response.status(401);
+            return {
+                success: false,
+                error: 'You must verify your email first before logging in.'
+            };
+        }
 
-        await this.prisma.token.create({
-            data: {
-                token,
-                userId: user.id
-            }
-        });
+        response.cookie('token', token);
 
         return {
             success: true
@@ -84,35 +77,22 @@ export class AuthController {
     @UsePipes(new ZodValidationPipe(types.registerSchema))
     async register(
         @Body() postData: types.RegisterBody,
-        @Res() response: Response
+        @Res({ passthrough: true }) response: Response
     ): Promise<Result> {
-        const existing = await this.prisma.user.findUnique({
-            where: {
-                email: postData.email
-            }
-        });
+        const user = await this.authService.register(
+            postData.email,
+            postData.password,
+            postData.firstName,
+            postData.lastName
+        );
 
-        if (existing) {
+        if (!user) {
             response.status(400);
             return {
                 success: false,
                 error: 'A user already exists with that email.'
             };
         }
-
-        const token = randomBytes(32).toString('hex');
-
-        await this.prisma.user.create({
-            data: {
-                email: postData.email,
-                passwordHash: await hash(postData.password, 9),
-                firstName: postData.firstName,
-                lastName: postData.lastName,
-                joinTimestamp: Math.floor(Date.now() / 1000),
-                verifyToken: token
-            }
-        });
-        // TODO: send email async
 
         return {
             success: true
@@ -124,13 +104,9 @@ export class AuthController {
     @UsePipes(new ZodValidationPipe(types.verifySchema))
     async verify(
         @Body() postData: types.VerifyBody,
-        @Res() response: Response
+        @Res({ passthrough: true }) response: Response
     ): Promise<Result> {
-        const user = await this.prisma.user.findUnique({
-            where: {
-                verifyToken: postData.token
-            }
-        });
+        const user = await this.authService.verifyUser(postData.token);
 
         if (!user) {
             response.status(401);
@@ -139,17 +115,6 @@ export class AuthController {
                 error: 'Invalid verification token.'
             };
         }
-
-        await this.prisma.user.update({
-            where: {
-                id: user.id
-            },
-            data: {
-                verifyToken: null
-            }
-        });
-
-        // TODO: send email notification
 
         return {
             success: true
@@ -162,28 +127,7 @@ export class AuthController {
     async resetPassword(
         @Body() postData: types.ResetPasswordBody
     ): Promise<Result> {
-        const user = await this.prisma.user.findUnique({
-            where: {
-                email: postData.email
-            }
-        });
-
-        if (user) {
-            const token = randomBytes(32).toString('hex');
-
-            await this.prisma.resetToken.create({
-                data: {
-                    token,
-                    expires: Math.floor(Date.now() / 1000) + 60 * 30, // 30 minutes
-                    userId: user.id
-                }
-            });
-
-            // TODO: send mail async
-        } else {
-            // timing attack
-            await sleep(100);
-        }
+        await this.authService.sendPasswordReset(postData.email);
 
         return {
             success: true
@@ -191,16 +135,11 @@ export class AuthController {
     }
 
     @Get('/reset/:token')
-    @HttpCode(200)
     async checkResetToken(
         @Param('token') resetToken: string,
-        @Res() response: Response
+        @Res({ passthrough: true }) response: Response
     ): Promise<Result> {
-        const token = await this.prisma.resetToken.findUnique({
-            where: {
-                token: resetToken
-            }
-        });
+        const token = await this.authService.getPasswordReset(resetToken);
 
         // if token doesn't exist or if token is expired
         if (!token || token.expires < Math.floor(Date.now() / 1000)) {
@@ -222,13 +161,9 @@ export class AuthController {
     async useResetToken(
         @Param('token') resetToken: string,
         @Body() postData: types.UseResetTokenBody,
-        @Res() response: Response
+        @Res({ passthrough: true }) response: Response
     ): Promise<Result> {
-        const token = await this.prisma.resetToken.findUnique({
-            where: {
-                token: resetToken
-            }
-        });
+        const token = await this.authService.getPasswordReset(resetToken);
 
         // if token doesn't exist or if token is expired
         if (!token || token.expires < Math.floor(Date.now() / 1000)) {
@@ -239,16 +174,7 @@ export class AuthController {
             };
         }
 
-        await this.prisma.user.update({
-            where: {
-                id: token.userId
-            },
-            data: {
-                passwordHash: await hash(postData.password, 9)
-            }
-        });
-
-        // TODO: send email notification
+        await this.authService.resetPassword(token, postData.password);
 
         return {
             success: true

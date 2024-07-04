@@ -13,7 +13,10 @@ export class ZodValidationPipe implements PipeTransform {
         try {
             return this.schema.parse(value);
         } catch (error) {
-            throw new BadRequestException('Validation failed');
+            throw new BadRequestException({
+                success: false,
+                error: 'Invalid post data.'
+            });
         }
     }
 }
