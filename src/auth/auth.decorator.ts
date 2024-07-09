@@ -3,9 +3,10 @@ import {
     ExecutionContext,
     UnauthorizedException
 } from '@nestjs/common';
+import { User } from '@prisma/client';
 
 export const AuthUser = createParamDecorator(
-    async (data: unknown, ctx: ExecutionContext) => {
+    async (data: any, ctx: ExecutionContext): Promise<User> => {
         const request = ctx.switchToHttp().getRequest();
         const response = ctx.switchToHttp().getResponse();
         const prisma = request['prisma'];

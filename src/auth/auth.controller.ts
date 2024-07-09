@@ -180,4 +180,16 @@ export class AuthController {
             success: true
         };
     }
+
+    @Post('/logout')
+    @HttpCode(200)
+    async logout(
+        @Res({ passthrough: true }) response: Response
+    ): Promise<Result> {
+        response.cookie('token', null);
+
+        return {
+            success: true
+        };
+    }
 }

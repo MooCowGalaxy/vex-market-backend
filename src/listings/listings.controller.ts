@@ -43,13 +43,15 @@ export class ListingsController {
 
     @Post()
     @HttpCode(200)
-    @UsePipes(new ZodValidationPipe(types.createSchema))
     async createListing(
         @AuthUser() user: User,
-        @Body() postData: types.CreateBody,
+        @Body(new ZodValidationPipe(types.createSchema))
+        postData: types.CreateBody,
         @Res({ passthrough: true }) response: Response
     ): Promise<types.CreateResult> {
-        if ((await this.listingsService.getLatLong(postData.zip)) === null) {
+        const geo = await this.listingsService.getLatLong(postData.zip);
+
+        if (geo === null) {
             response.status(400);
             return {
                 success: false,
@@ -61,9 +63,11 @@ export class ListingsController {
             user,
             postData.title,
             postData.description,
-            postData.price,
             postData.zip,
-            postData.type
+            postData.price,
+            postData.type,
+            postData.condition,
+            geo
         );
 
         return {

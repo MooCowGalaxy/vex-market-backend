@@ -37,7 +37,7 @@ export class LocationController {
 
         return {
             success: true,
-            zip: zip
+            zip: `00000${zip}`.slice(-5)
         };
     }
 

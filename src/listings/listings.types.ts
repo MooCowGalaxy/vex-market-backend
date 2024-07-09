@@ -4,9 +4,18 @@ import { Result } from '../types';
 export const createSchema = z
     .object({
         title: z.string().min(1).max(128),
-        description: z.string().max(8000),
-        price: z.number().min(0).max(99999),
+        description: z.string().min(1).max(8000),
+        price: z.number().gt(0).lt(10000),
         zip: z.number().int().min(0).max(99999),
+        condition: z.enum([
+            'New',
+            'Like new',
+            'Good',
+            'Used',
+            'Poor',
+            'Parts only',
+            'N/A'
+        ]),
         type: z.enum(['local', 'shipping', 'both']).default('both')
     })
     .required();

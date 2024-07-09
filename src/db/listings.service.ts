@@ -74,7 +74,7 @@ export class ListingsService {
     async searchListings(
         query: string,
         zipCode: number | null,
-        type: 'local' | 'shipping' | 'both'
+        type: string // 'local' | 'shipping' | 'both'
     ) {
         const location: LatLong | null = zipCode
             ? await this.getLatLong(zipCode)
@@ -103,9 +103,11 @@ export class ListingsService {
         user: User,
         title: string,
         description: string,
-        price: number,
         zip: number,
-        type: 'local' | 'shipping' | 'both'
+        price: number,
+        type: string, // 'local' | 'shipping' | 'both',
+        condition: string,
+        geo: LatLong
     ) {
         const post = await this.prisma.post.create({
             data: {
@@ -117,9 +119,14 @@ export class ListingsService {
             id: post.id,
             title,
             description,
-            price,
             zip,
-            type
+            price,
+            type,
+            condition,
+            _geo: {
+                lat: geo.lat,
+                lng: geo.lng
+            }
         };
 
         const task = await this.meiliSearch
