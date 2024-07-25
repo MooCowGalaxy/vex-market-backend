@@ -9,7 +9,7 @@ import {
     UsePipes
 } from '@nestjs/common';
 
-import { AuthService } from '../db/auth.service';
+import { AuthService } from './auth.service';
 import * as types from './auth.types';
 import { Result } from '../types';
 import { ZodValidationPipe } from '../validation.pipe';
@@ -25,6 +25,7 @@ export class AuthController {
     async getUser(@AuthUser() user: User): Promise<types.GetUserResult> {
         return {
             success: true,
+            userId: user.id,
             firstName: user.firstName,
             lastName: user.lastName
         };

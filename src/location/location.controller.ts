@@ -7,7 +7,7 @@ import {
     UsePipes
 } from '@nestjs/common';
 import { Response } from 'express';
-import { ListingsService } from '../db/listings.service';
+import { ListingsService } from '../listings/listings.service';
 import { ZodValidationPipe } from '../validation.pipe';
 import * as types from './location.types';
 

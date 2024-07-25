@@ -11,6 +11,7 @@ export function passwordReq(password: string) {
 
 // GET /auth/user
 export type GetUserResult = Result & {
+    userId?: number;
     firstName?: string;
     lastName?: string;
 };
