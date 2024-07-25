@@ -80,8 +80,8 @@ model Chat {
   id    Int    @id @default(autoincrement())
   cdnId String @default(uuid())
 
-  post   Post @relation(fields: [postId], references: [id])
-  postId Int
+  post   Post? @relation(fields: [postId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  postId Int?
 
   seller   User @relation("seller", fields: [sellerId], references: [id])
   sellerId Int

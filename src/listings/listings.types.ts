@@ -67,6 +67,14 @@ export const searchSchema = z
 
 export type SearchBody = z.infer<typeof searchSchema>;
 
+export const deleteImagesSchema = z
+    .object({
+        images: z.array(z.string().url().max(128)).min(1)
+    })
+    .required();
+
+export type DeleteImagesBody = z.infer<typeof deleteImagesSchema>;
+
 export type LatLong = {
     lat: number;
     lng: number;

@@ -1,6 +1,7 @@
 import {
     Body,
     Controller,
+    Delete,
     FileTypeValidator,
     Get,
     HttpCode,
@@ -147,33 +148,49 @@ export class ListingsController {
         putData: types.UpdateBody,
         @Res({ passthrough: true }) response: Response
     ) {
-        if (isNaN(parseInt(postId))) {
-            response.status(404);
-            return {
-                success: false,
-                error: 'Post not found'
-            };
-        }
-
-        // get post object
-        const post = await this.listingsService.getListing(parseInt(postId));
-        if (post === null) {
-            response.status(404);
-            return {
-                success: false,
-                error: 'Post not found'
-            };
-        }
-
-        if (post.authorId !== user.id) {
-            response.status(403);
-            return {
-                success: false,
-                error: 'Insufficient permissions'
-            };
+        const { error: permissionError, post } =
+            await this.listingsService.validateAuthorPermissions(
+                postId,
+                user,
+                response
+            );
+        if (permissionError !== null || !post) {
+            return permissionError;
         }
 
         await this.listingsService.updateListing(post.id, putData);
+
+        return {
+            success: true
+        };
+    }
+
+    @Delete('/:postId')
+    @HttpCode(200)
+    async deleteListing(
+        @AuthUser() user: User,
+        @Param('postId') postId: string,
+        @Res({ passthrough: true }) response: Response
+    ) {
+        const { error: permissionError, post } =
+            await this.listingsService.validateAuthorPermissions(
+                postId,
+                user,
+                response
+            );
+        if (permissionError !== null || !post) {
+            return permissionError;
+        }
+
+        const { success, error } =
+            await this.listingsService.deleteListing(post);
+        if (!success) {
+            response.status(500);
+            return {
+                success: false,
+                error
+            };
+        }
 
         return {
             success: true
@@ -189,30 +206,14 @@ export class ListingsController {
         postData: types.ArchiveBody,
         @Res({ passthrough: true }) response: Response
     ) {
-        if (isNaN(parseInt(postId))) {
-            response.status(404);
-            return {
-                success: false,
-                error: 'Post not found'
-            };
-        }
-
-        // get post object
-        const post = await this.listingsService.getListing(parseInt(postId));
-        if (post === null) {
-            response.status(404);
-            return {
-                success: false,
-                error: 'Post not found'
-            };
-        }
-
-        if (post.authorId !== user.id) {
-            response.status(403);
-            return {
-                success: false,
-                error: 'Insufficient permissions'
-            };
+        const { error: permissionError, post } =
+            await this.listingsService.validateAuthorPermissions(
+                postId,
+                user,
+                response
+            );
+        if (permissionError !== null || !post) {
+            return permissionError;
         }
 
         await this.listingsService.archiveListing(post.id, postData.archived);
@@ -239,30 +240,14 @@ export class ListingsController {
         file: Express.Multer.File,
         @Res({ passthrough: true }) response: Response
     ) {
-        if (isNaN(parseInt(postId))) {
-            response.status(404);
-            return {
-                success: false,
-                error: 'Post not found'
-            };
-        }
-
-        // get post object
-        const post = await this.listingsService.getListing(parseInt(postId));
-        if (post === null) {
-            response.status(404);
-            return {
-                success: false,
-                error: 'Post not found'
-            };
-        }
-
-        if (post.authorId !== user.id) {
-            response.status(403);
-            return {
-                success: false,
-                error: 'Insufficient permissions'
-            };
+        const { error: permissionError, post } =
+            await this.listingsService.validateAuthorPermissions(
+                postId,
+                user,
+                response
+            );
+        if (permissionError !== null || !post) {
+            return permissionError;
         }
 
         const res = await this.listingsService.uploadImage(user, post, file);
@@ -271,6 +256,62 @@ export class ListingsController {
             return {
                 success: false,
                 error: 'Something went wrong while uploading your image'
+            };
+        }
+
+        return {
+            success: true
+        };
+    }
+
+    @Post('/:postId/images/delete')
+    @HttpCode(200)
+    async deleteImagesFromPost(
+        @AuthUser() user: User,
+        @Param('postId') postId: string,
+        @Body(new ZodValidationPipe(types.deleteImagesSchema))
+        postData: types.DeleteImagesBody,
+        @Res({ passthrough: true }) response: Response
+    ) {
+        const { error: permissionError, post } =
+            await this.listingsService.validateAuthorPermissions(
+                postId,
+                user,
+                response
+            );
+        if (permissionError !== null || !post) {
+            return permissionError;
+        }
+
+        const remainingImages = post.images;
+        const deletedImages = [];
+        for (const image of postData.images) {
+            const index = remainingImages.indexOf(image);
+            if (index === -1) {
+                return {
+                    success: false,
+                    error: `Image URL ${image} not found`
+                };
+            }
+            deletedImages.push(...remainingImages.splice(index, 1));
+        }
+
+        if (remainingImages.length === 0) {
+            return {
+                success: false,
+                error: 'Cannot delete all images'
+            };
+        }
+
+        const res = await this.listingsService.deleteImages(
+            post,
+            deletedImages
+        );
+        if (!res.success) {
+            response.status(500);
+            return {
+                success: false,
+                error: 'Something went wrong while deleting your images'
             };
         }
 

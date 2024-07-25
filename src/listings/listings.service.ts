@@ -5,6 +5,8 @@ import { MeiliSearch } from 'meilisearch';
 import { Post, User } from '@prisma/client';
 import { CdnService } from '../db/cdn.service';
 import * as types from './listings.types';
+import { Response } from 'express';
+import { CombinedPost } from './listings.types';
 
 @Injectable()
 export class ListingsService {
@@ -247,6 +249,45 @@ export class ListingsService {
         await this.meiliSearch.waitForTask(task.taskUid);
     }
 
+    async deleteListing(post: CombinedPost): Promise<{
+        success: boolean;
+        error?: string;
+    }> {
+        // delete images
+        const imagesRes = await this.deleteImages(post, post.images);
+        if (!imagesRes.success) {
+            return {
+                success: false,
+                error: `Failed deleting image URL ${imagesRes.url}`
+            };
+        }
+
+        // delete from prisma
+        try {
+            await this.prisma.post.delete({
+                where: {
+                    id: post.id
+                }
+            });
+        } catch (e) {
+            console.error(e);
+            return {
+                success: false,
+                error: `Failed deleting listing from database`
+            };
+        }
+
+        // delete from meili
+        const task = await this.meiliSearch
+            .index('listings')
+            .deleteDocument(post.id);
+        await this.meiliSearch.waitForTask(task.taskUid);
+
+        return {
+            success: true
+        };
+    }
+
     async uploadImage(
         user: User,
         post: types.CombinedPost,
@@ -274,6 +315,31 @@ export class ListingsService {
         return true;
     }
 
+    async deleteImages(post: types.CombinedPost, images: string[]) {
+        for (const imageUrl of images) {
+            const noProtocol = imageUrl.split('//')[1];
+            const noDomainPath = noProtocol.split('/').slice(1).join('/');
+
+            try {
+                await this.cdnService.deleteFile(noDomainPath);
+            } catch (e) {
+                console.error(e);
+                return { success: false, url: imageUrl };
+            }
+        }
+
+        const task = await this.meiliSearch.index('listings').updateDocuments([
+            {
+                id: post.id,
+                images: post.images.filter((url) => !images.includes(url))
+            }
+        ]);
+
+        await this.meiliSearch.waitForTask(task.taskUid);
+
+        return { success: true };
+    }
+
     redactPost(
         post: types.CombinedPost | types.PostDocument
     ): types.RedactedPost {
@@ -288,6 +354,52 @@ export class ListingsService {
             images: post.images,
             created: post.created,
             lastUpdated: post.lastUpdated
+        };
+    }
+
+    async validateAuthorPermissions(
+        postId: string,
+        user: User,
+        response: Response
+    ) {
+        if (isNaN(parseInt(postId))) {
+            response.status(404);
+            return {
+                error: {
+                    success: false,
+                    error: 'Post not found'
+                },
+                post: null
+            };
+        }
+
+        // get post object
+        const post = await this.getListing(parseInt(postId));
+        if (post === null) {
+            response.status(404);
+            return {
+                error: {
+                    success: false,
+                    error: 'Post not found'
+                },
+                post: null
+            };
+        }
+
+        if (post.authorId !== user.id) {
+            response.status(403);
+            return {
+                error: {
+                    success: false,
+                    error: 'Insufficient permissions'
+                },
+                post: null
+            };
+        }
+
+        return {
+            error: null,
+            post
         };
     }
 }
