@@ -100,7 +100,7 @@ model ChatMessage {
   chatId Int
 
   authorId  Int
-  timestamp Int
+  timestamp BigInt
   message   String  @db.VarChar(1000)
   image     String? @db.VarChar(100)
 }

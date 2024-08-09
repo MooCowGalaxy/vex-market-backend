@@ -19,7 +19,6 @@ import {
 import { forwardRef, Inject } from '@nestjs/common';
 
 @WebSocketGateway(3001, {
-    transports: ['websocket'],
     cors: {
         origin: '*'
     }
@@ -101,19 +100,26 @@ export class MessagesGateway
     broadcastMessage({
         id,
         chatId,
+        timestamp,
         authorId,
+        authorName,
         message = '',
         image = null
     }: {
         id: number;
         chatId: number;
+        timestamp: number;
         authorId: number;
+        authorName: string;
         message: string;
         image: string | null;
     }) {
         this.server.to(`chat:${chatId}`).emit('chat', {
+            chatId,
             id,
+            timestamp,
             authorId,
+            authorName,
             message,
             image
         });

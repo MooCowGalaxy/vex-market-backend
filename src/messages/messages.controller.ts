@@ -30,11 +30,30 @@ export class MessagesController {
         private readonly listingsService: ListingsService
     ) {}
 
+    @Post('token')
+    @HttpCode(200)
+    async getWebSocketToken(@AuthUser() user: User) {
+        return {
+            success: true,
+            token: await this.messagesService.createLoginToken(user)
+        };
+    }
+
     @Get()
     async getChats(@AuthUser() user: User) {
         const chats = await this.messagesService.getChats(user);
+
+        // remove duplicate post IDs
+        const postIds: { [key: string]: number } = {};
+
+        chats.forEach((chat) => {
+            if (chat.postId !== null) {
+                postIds[chat.postId] = chat.postId;
+            }
+        });
+
         const posts = await this.listingsService.getListingsFromId(
-            chats.map((chat) => chat.postId)
+            Object.values(postIds)
         );
 
         const postDict: { [key: string]: PostDocument } = {};
@@ -46,7 +65,7 @@ export class MessagesController {
             success: true,
             chats: chats.map((chat) => ({
                 id: chat.id,
-                postName: postDict[chat.postId],
+                postName: chat.postId ? postDict[chat.postId].title : null,
                 recipientName: this.messagesService.getChatRecipient(
                     chat,
                     user
@@ -122,12 +141,20 @@ export class MessagesController {
             before
         );
 
+        let post = null;
+        if (chat.postId) {
+            post = await this.listingsService.getListing(chat.postId);
+        }
+
         return {
             success: true,
+            postName: post ? post.title : null,
+            postId: post ? post.id : null,
+            recipientName: this.messagesService.getChatRecipient(chat, user),
             messages: messages.map((message) => ({
                 id: message.id,
                 authorId: message.authorId,
-                timestamp: message.timestamp,
+                timestamp: parseInt(message.timestamp.toString()),
                 message: message.message,
                 image: message.image
             }))
@@ -228,15 +255,6 @@ export class MessagesController {
 
         return {
             success: true
-        };
-    }
-
-    @Post('token')
-    @HttpCode(200)
-    async getWebSocketToken(@AuthUser() user: User) {
-        return {
-            success: true,
-            token: await this.messagesService.createLoginToken(user)
         };
     }
 }

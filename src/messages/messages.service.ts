@@ -66,6 +66,10 @@ export class MessagesService {
         return this.prisma.chat.findMany({
             where: {
                 OR: [{ sellerId: user.id }, { buyerId: user.id }]
+            },
+            include: {
+                buyer: true,
+                seller: true
             }
         });
     }
@@ -101,18 +105,20 @@ export class MessagesService {
                 postId: post.id,
                 sellerId: post.authorId,
                 buyerId: user.id,
-                lastUpdate: Date.now()
+                lastUpdate: Math.floor(Date.now() / 1000)
             }
         });
     }
 
-    async getChatRecipient(
-        chat: Chat & { seller?: any; buyer?: any },
-        user: User
-    ) {
-        if (chat.sellerId === user.id) return chat.buyer;
-        else if (chat.buyerId === user.id) return chat.seller;
-        else return null;
+    getChatRecipient(chat: Chat & { seller?: any; buyer?: any }, user: User) {
+        let recipient;
+        if (chat.sellerId === user.id) {
+            recipient = chat.buyer;
+        } else if (chat.buyerId === user.id) {
+            recipient = chat.seller;
+        } else return null;
+
+        return `${recipient.firstName} ${recipient.lastName}`;
     }
 
     async getMessages(
@@ -144,7 +150,20 @@ export class MessagesService {
             }
         });
 
-        this.messagesGateway.broadcastMessage(chatMessage);
+        await this.prisma.chat.update({
+            where: {
+                id: chat.id
+            },
+            data: {
+                lastUpdate: Math.floor(Date.now() / 1000)
+            }
+        });
+
+        this.messagesGateway.broadcastMessage({
+            ...chatMessage,
+            timestamp: parseInt(chatMessage.timestamp.toString()),
+            authorName: `${sender.firstName} ${sender.lastName[0]}.`
+        });
     }
 
     async uploadImage(chat: Chat, sender: User, file: Express.Multer.File) {
@@ -168,7 +187,20 @@ export class MessagesService {
             }
         });
 
-        this.messagesGateway.broadcastMessage(chatMessage);
+        await this.prisma.chat.update({
+            where: {
+                id: chat.id
+            },
+            data: {
+                lastUpdate: Math.floor(Date.now() / 1000)
+            }
+        });
+
+        this.messagesGateway.broadcastMessage({
+            ...chatMessage,
+            timestamp: parseInt(chatMessage.timestamp.toString()),
+            authorName: `${sender.firstName} ${sender.lastName[0]}.`
+        });
 
         return true;
     }
