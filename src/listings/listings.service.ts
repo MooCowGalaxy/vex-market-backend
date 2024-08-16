@@ -90,7 +90,8 @@ export class ListingsService {
     async searchListings(
         query: string,
         zipCode: number | null,
-        type: string // 'local' | 'shipping' | 'both'
+        type: string, // 'local' | 'shipping' | 'both'
+        page: number = 1
     ) {
         const location: types.LatLong | null = zipCode
             ? await this.getLatLong(zipCode)
@@ -99,6 +100,7 @@ export class ListingsService {
         const opts = {
             filter: [`archived = false`],
             sort: [`lastUpdated:desc`],
+            offset: 20 * (page - 1),
             limit: 20
         };
 
@@ -112,8 +114,14 @@ export class ListingsService {
             opts.sort.push(`_geoPoint(${location.lat}, ${location.lng}):asc`);
         }
 
-        return (await this.meiliSearch.index('listings').search(query, opts))
-            .hits as any as types.PostDocument[];
+        const result = await this.meiliSearch
+            .index('listings')
+            .search(query, opts);
+
+        return {
+            listings: result.hits as any as types.PostDocument[],
+            totalHits: result.estimatedTotalHits
+        };
     }
 
     async createListing(
@@ -122,7 +130,7 @@ export class ListingsService {
         description: string,
         zip: number,
         price: number,
-        type: string, // 'local' | 'shipping' | 'both',
+        type: 'local' | 'shipping' | 'both',
         condition: string,
         geo: types.LatLong
     ) {
@@ -134,7 +142,7 @@ export class ListingsService {
 
         const zipObject = await this.getZipInfo(zip);
 
-        const document = {
+        const document: types.PostDocument = {
             id: post.id,
             title,
             description,
@@ -151,7 +159,9 @@ export class ListingsService {
             _geo: {
                 lat: geo.lat,
                 lng: geo.lng
-            }
+            },
+            archived: false,
+            authorId: user.id
         };
 
         const task = await this.meiliSearch
@@ -278,10 +288,18 @@ export class ListingsService {
         }
 
         // delete from meili
-        const task = await this.meiliSearch
-            .index('listings')
-            .deleteDocument(post.id);
-        await this.meiliSearch.waitForTask(task.taskUid);
+        try {
+            const task = await this.meiliSearch
+                .index('listings')
+                .deleteDocument(post.id);
+            await this.meiliSearch.waitForTask(task.taskUid);
+        } catch (e) {
+            console.error(e);
+            return {
+                success: false,
+                error: `Failed deleting listing from database`
+            };
+        }
 
         return {
             success: true
@@ -353,7 +371,8 @@ export class ListingsService {
             condition: post.condition,
             images: post.images,
             created: post.created,
-            lastUpdated: post.lastUpdated
+            lastUpdated: post.lastUpdated,
+            authorId: post.authorId
         };
     }
 

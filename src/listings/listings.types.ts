@@ -58,8 +58,8 @@ export type ArchiveBody = z.infer<typeof archiveSchema>;
 
 export const searchSchema = z
     .object({
-        query: z.string(),
-        zipCode: z.string().optional(),
+        query: z.string().min(1).max(200),
+        zipCode: z.string().nullable().optional(),
         type: z.enum(['local', 'shipping', 'both']).default('both')
         // TODO: category
     })
@@ -108,6 +108,7 @@ export type PostDocument = {
     created: number;
     lastUpdated: number;
     archived: boolean;
+    authorId: number;
 };
 
 export type CombinedPost = Post & PostDocument;
@@ -123,4 +124,5 @@ export type RedactedPost = {
     images: string[];
     created: number;
     lastUpdated: number;
+    authorId: number;
 };

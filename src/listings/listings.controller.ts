@@ -13,8 +13,7 @@ import {
     Query,
     Res,
     UploadedFile,
-    UseInterceptors,
-    UsePipes
+    UseInterceptors
 } from '@nestjs/common';
 import { ListingsService } from './listings.service';
 import { ZodValidationPipe } from '../validation.pipe';
@@ -322,19 +321,29 @@ export class ListingsController {
 
     @Post('/search')
     @HttpCode(200)
-    @UsePipes(new ZodValidationPipe(types.searchSchema))
-    async searchListings(@Body() postData: types.SearchBody) {
-        const zipCode = parseInt(postData.zipCode) || null;
+    async searchListings(
+        @Param('page') page: string,
+        @Body(new ZodValidationPipe(types.searchSchema))
+        postData: types.SearchBody
+    ) {
+        const zipCode = parseInt(postData.zipCode || '') || null;
+        const pageNumber = parseInt(page) || 1;
 
-        const listings = await this.listingsService.searchListings(
-            postData.query,
-            zipCode,
-            postData.type
-        );
+        const { listings, totalHits } =
+            await this.listingsService.searchListings(
+                postData.query,
+                zipCode,
+                postData.type,
+                pageNumber
+            );
 
         return {
             success: true,
-            listings
+            listings: listings.map((listing) =>
+                this.listingsService.redactPost(listing)
+            ),
+            page: pageNumber,
+            estimatedPages: Math.ceil(totalHits / 20)
         };
     }
 }
