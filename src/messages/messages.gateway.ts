@@ -100,6 +100,7 @@ export class MessagesGateway
     broadcastMessage({
         id,
         chatId,
+        chatTitle,
         timestamp,
         authorId,
         authorName,
@@ -108,6 +109,7 @@ export class MessagesGateway
     }: {
         id: number;
         chatId: number;
+        chatTitle: string;
         timestamp: number;
         authorId: number;
         authorName: string;
@@ -116,6 +118,7 @@ export class MessagesGateway
     }) {
         this.server.to(`chat:${chatId}`).emit('chat', {
             chatId,
+            chatTitle,
             id,
             timestamp,
             authorId,

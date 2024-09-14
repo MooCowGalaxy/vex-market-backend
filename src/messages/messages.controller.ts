@@ -94,6 +94,7 @@ export class MessagesController {
 
         const chat = await this.messagesService.findOrCreateChat(user, post);
         await this.messagesService.createMessage(
+            post,
             chat,
             user,
             postData.initialMessage
@@ -183,7 +184,7 @@ export class MessagesController {
             user,
             parseInt(chatId)
         );
-        if (!chat) {
+        if (!chat || !chat.postId) {
             response.status(404);
             return {
                 success: false,
@@ -191,7 +192,21 @@ export class MessagesController {
             };
         }
 
-        await this.messagesService.createMessage(chat, user, postData.message);
+        const post = await this.listingsService.getListing(chat.postId);
+        if (!post) {
+            response.status(500);
+            return {
+                success: false,
+                error: 'Something went wrong while sending the message.'
+            };
+        }
+
+        await this.messagesService.createMessage(
+            post,
+            chat,
+            user,
+            postData.message
+        );
 
         return {
             success: true
@@ -228,11 +243,20 @@ export class MessagesController {
             user,
             parseInt(chatId)
         );
-        if (!chat) {
+        if (!chat || !chat.postId) {
             response.status(404);
             return {
                 success: false,
                 error: 'Chat not found'
+            };
+        }
+
+        const post = await this.listingsService.getListing(chat.postId);
+        if (!post) {
+            response.status(500);
+            return {
+                success: false,
+                error: 'Something went wrong while sending the message.'
             };
         }
 
@@ -244,7 +268,12 @@ export class MessagesController {
             };
         }
 
-        const res = await this.messagesService.uploadImage(chat, user, file);
+        const res = await this.messagesService.uploadImage(
+            post,
+            chat,
+            user,
+            file
+        );
         if (!res) {
             response.status(500);
             return {
