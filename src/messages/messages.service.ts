@@ -5,6 +5,7 @@ import { Chat, Post, Prisma, User } from '@prisma/client';
 import { randomBytes } from 'crypto';
 import { MessagesGateway } from './messages.gateway';
 import { CdnService } from '../db/cdn.service';
+import { CombinedPost } from '../listings/listings.types';
 
 @Injectable()
 export class MessagesService {
@@ -140,7 +141,12 @@ export class MessagesService {
         });
     }
 
-    async createMessage(chat: Chat, sender: User, message: string) {
+    async createMessage(
+        post: CombinedPost,
+        chat: Chat,
+        sender: User,
+        message: string
+    ) {
         const chatMessage = await this.prisma.chatMessage.create({
             data: {
                 chatId: chat.id,
@@ -161,12 +167,18 @@ export class MessagesService {
 
         this.messagesGateway.broadcastMessage({
             ...chatMessage,
+            chatTitle: post.title,
             timestamp: parseInt(chatMessage.timestamp.toString()),
             authorName: `${sender.firstName} ${sender.lastName[0]}.`
         });
     }
 
-    async uploadImage(chat: Chat, sender: User, file: Express.Multer.File) {
+    async uploadImage(
+        post: CombinedPost,
+        chat: Chat,
+        sender: User,
+        file: Express.Multer.File
+    ) {
         const fileName = `messages/${chat.cdnId}/${Date.now()}.${file.originalname.split('.').slice(-1)[0]}`;
 
         let res;
@@ -198,6 +210,7 @@ export class MessagesService {
 
         this.messagesGateway.broadcastMessage({
             ...chatMessage,
+            chatTitle: post.title,
             timestamp: parseInt(chatMessage.timestamp.toString()),
             authorName: `${sender.firstName} ${sender.lastName[0]}.`
         });
