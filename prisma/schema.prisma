@@ -83,11 +83,13 @@ model Chat {
   post   Post? @relation(fields: [postId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   postId Int?
 
-  seller   User @relation("seller", fields: [sellerId], references: [id])
-  sellerId Int
+  seller       User @relation("seller", fields: [sellerId], references: [id])
+  sellerId     Int
+  sellerUnread Int  @default(0)
 
-  buyer   User @relation("buyer", fields: [buyerId], references: [id])
-  buyerId Int
+  buyer       User @relation("buyer", fields: [buyerId], references: [id])
+  buyerId     Int
+  buyerUnread Int  @default(0)
 
   messages   ChatMessage[]
   lastUpdate Int

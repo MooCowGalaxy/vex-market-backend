@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Chat" ADD COLUMN     "buyerUnread" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "sellerUnread" INTEGER NOT NULL DEFAULT 0;

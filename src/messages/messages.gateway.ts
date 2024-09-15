@@ -39,12 +39,14 @@ export class MessagesGateway
         console.log(`Server initialized`);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     handleConnection(client: Socket, ...args: any[]) {
-        console.log(`Client connected: ${client.id} ${args}`);
+        // console.log(`Client connected: ${client.id} ${args}`);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     handleDisconnect(client: Socket) {
-        console.log(`Client disconnected: ${client.id}`);
+        // console.log(`Client disconnected: ${client.id}`);
     }
 
     @SubscribeMessage('auth')

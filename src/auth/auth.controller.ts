@@ -16,18 +16,37 @@ import { ZodValidationPipe } from '../validation.pipe';
 import { Response } from 'express';
 import { AuthUser } from './auth.decorator';
 import { User } from '@prisma/client';
+import { MessagesService } from '../messages/messages.service';
 
 @Controller('auth')
 export class AuthController {
-    constructor(private readonly authService: AuthService) {}
+    constructor(
+        private readonly authService: AuthService,
+        private readonly messagesService: MessagesService
+    ) {}
 
     @Get('/user')
     async getUser(@AuthUser() user: User): Promise<types.GetUserResult> {
+        const notifications =
+            await this.messagesService.getTotalUnreadCount(user);
+
         return {
             success: true,
             userId: user.id,
             firstName: user.firstName,
-            lastName: user.lastName
+            lastName: user.lastName,
+            notifications
+        };
+    }
+
+    @Get('/user/notifications')
+    async getNotificationCount(@AuthUser() user: User) {
+        const notifications =
+            await this.messagesService.getTotalUnreadCount(user);
+
+        return {
+            success: true,
+            notifications
         };
     }
 

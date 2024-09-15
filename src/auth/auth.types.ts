@@ -14,6 +14,7 @@ export type GetUserResult = Result & {
     userId?: number;
     firstName?: string;
     lastName?: string;
+    notifications?: number;
 };
 
 // POST /auth/login

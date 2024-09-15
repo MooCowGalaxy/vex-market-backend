@@ -70,7 +70,11 @@ export class MessagesController {
                     chat,
                     user
                 ),
-                lastUpdate: chat.lastUpdate
+                lastUpdate: chat.lastUpdate,
+                unreadCount:
+                    chat.sellerId === user.id
+                        ? chat.sellerUnread
+                        : chat.buyerUnread
             }))
         };
     }
@@ -103,6 +107,41 @@ export class MessagesController {
         return {
             success: true,
             chatId: chat.id
+        };
+    }
+
+    @Post(':chatId/read')
+    @HttpCode(200)
+    async setUnreadChatMessages(
+        @AuthUser() user: User,
+        @Param('chatId') chatId: string,
+        @Res({ passthrough: true }) response: Response
+    ) {
+        if (isNaN(parseInt(chatId))) {
+            response.status(404);
+            return {
+                success: false,
+                error: 'Chat not found'
+            };
+        }
+
+        // get chat
+        const chat = await this.messagesService.findChat(
+            user,
+            parseInt(chatId)
+        );
+        if (!chat) {
+            response.status(404);
+            return {
+                success: false,
+                error: 'Chat not found'
+            };
+        }
+
+        await this.messagesService.setUnreadCount(chat, user, 0);
+
+        return {
+            success: true
         };
     }
 
@@ -141,6 +180,8 @@ export class MessagesController {
             25,
             before
         );
+
+        await this.messagesService.setUnreadCount(chat, user, 0);
 
         let post = null;
         if (chat.postId) {

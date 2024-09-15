@@ -75,6 +75,20 @@ export class MessagesService {
         });
     }
 
+    async getTotalUnreadCount(user: User) {
+        const chats = await this.getChats(user);
+
+        let sum = 0;
+        for (const chat of chats) {
+            sum +=
+                chat.sellerId === user.id
+                    ? chat.sellerUnread
+                    : chat.buyerUnread;
+        }
+
+        return sum;
+    }
+
     async findChat(user: User, chatId: number) {
         const chat = await this.prisma.chat.findUnique({
             where: {
@@ -119,7 +133,7 @@ export class MessagesService {
             recipient = chat.seller;
         } else return null;
 
-        return `${recipient.firstName} ${recipient.lastName}`;
+        return `${recipient.firstName} ${recipient.lastName.slice(0, 1)}${recipient.lastName.length > 1 ? '.' : ''}`;
     }
 
     async getMessages(
@@ -139,6 +153,47 @@ export class MessagesService {
                 timestamp: 'desc'
             }
         });
+    }
+
+    async setUnreadCount(
+        chat: Chat,
+        user: User,
+        unreadCount: number,
+        opposite: boolean = false
+    ) {
+        const buyer = chat.buyerId === user.id;
+        const seller = chat.sellerId === user.id;
+
+        if ((opposite && buyer) || (!opposite && seller)) {
+            // update seller
+            await this.prisma.chat.update({
+                where: {
+                    id: chat.id
+                },
+                data: {
+                    sellerUnread: unreadCount
+                }
+            });
+        } else if ((!opposite && buyer) || (opposite && seller)) {
+            // update buyer
+            await this.prisma.chat.update({
+                where: {
+                    id: chat.id
+                },
+                data: {
+                    buyerUnread: unreadCount
+                }
+            });
+        }
+    }
+
+    async incrementUnreadCountOpposite(chat: Chat, user: User) {
+        // increment for the opposite user, e.g. if user is buyer then increment seller
+        if (chat.sellerId === user.id) {
+            await this.setUnreadCount(chat, user, chat.buyerUnread + 1, true);
+        } else if (chat.buyerId === user.id) {
+            await this.setUnreadCount(chat, user, chat.sellerUnread + 1, true);
+        }
     }
 
     async createMessage(
@@ -164,6 +219,9 @@ export class MessagesService {
                 lastUpdate: Math.floor(Date.now() / 1000)
             }
         });
+
+        await this.setUnreadCount(chat, sender, 0);
+        await this.incrementUnreadCountOpposite(chat, sender);
 
         this.messagesGateway.broadcastMessage({
             ...chatMessage,
@@ -207,6 +265,9 @@ export class MessagesService {
                 lastUpdate: Math.floor(Date.now() / 1000)
             }
         });
+
+        await this.setUnreadCount(chat, sender, 0);
+        await this.incrementUnreadCountOpposite(chat, sender);
 
         this.messagesGateway.broadcastMessage({
             ...chatMessage,
