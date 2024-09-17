@@ -66,6 +66,9 @@ export class MessagesController {
             chats: chats.map((chat) => ({
                 id: chat.id,
                 postName: chat.postId ? postDict[chat.postId].title : null,
+                postArchived: chat.postId
+                    ? postDict[chat.postId].archived
+                    : null,
                 recipientName: this.messagesService.getChatRecipient(
                     chat,
                     user
@@ -191,6 +194,7 @@ export class MessagesController {
         return {
             success: true,
             postName: post ? post.title : null,
+            postArchived: post ? post.archived : null,
             postId: post ? post.id : null,
             recipientName: this.messagesService.getChatRecipient(chat, user),
             messages: messages.map((message) => ({

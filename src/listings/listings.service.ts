@@ -388,6 +388,7 @@ export class ListingsService {
             images: post.images,
             created: post.created,
             lastUpdated: post.lastUpdated,
+            archived: post.archived,
             authorId: post.authorId
         };
     }

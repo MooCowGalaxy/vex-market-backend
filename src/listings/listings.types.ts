@@ -124,5 +124,6 @@ export type RedactedPost = {
     images: string[];
     created: number;
     lastUpdated: number;
+    archived: boolean;
     authorId: number;
 };
