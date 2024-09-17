@@ -72,8 +72,11 @@ export class ListingsService {
             limit: 5
         };
 
-        return (await this.meiliSearch.index('listings').search('', opts))
-            .hits as any as types.PostDocument[];
+        return (
+            await this.meiliSearch
+                .index(process.env.MEILISEARCH_BUCKET_NAME)
+                .search('', opts)
+        ).hits as any as types.PostDocument[];
     }
 
     async getShippingListings() {
@@ -83,8 +86,11 @@ export class ListingsService {
             limit: 5
         };
 
-        return (await this.meiliSearch.index('listings').search('', opts))
-            .hits as any as types.PostDocument[];
+        return (
+            await this.meiliSearch
+                .index(process.env.MEILISEARCH_BUCKET_NAME)
+                .search('', opts)
+        ).hits as any as types.PostDocument[];
     }
 
     async searchListings(
@@ -194,10 +200,12 @@ export class ListingsService {
 
     async getListingsFromId(listingIds: number[]) {
         return (
-            await this.meiliSearch.index('listings').search('', {
-                filter: [`id IN [${listingIds.join(', ')}]`],
-                sort: [`lastUpdated:desc`]
-            })
+            await this.meiliSearch
+                .index(process.env.MEILISEARCH_BUCKET_NAME)
+                .search('', {
+                    filter: [`id IN [${listingIds.join(', ')}]`],
+                    sort: [`lastUpdated:desc`]
+                })
         ).hits as any as types.PostDocument[];
     }
 
@@ -236,25 +244,29 @@ export class ListingsService {
     }
 
     async updateListing(postId: number, updateData: types.UpdateBody) {
-        const task = await this.meiliSearch.index('listings').updateDocuments([
-            {
-                id: postId,
-                ...updateData,
-                lastUpdated: Math.floor(Date.now() / 1000)
-            }
-        ]);
+        const task = await this.meiliSearch
+            .index(process.env.MEILISEARCH_BUCKET_NAME)
+            .updateDocuments([
+                {
+                    id: postId,
+                    ...updateData,
+                    lastUpdated: Math.floor(Date.now() / 1000)
+                }
+            ]);
 
         await this.meiliSearch.waitForTask(task.taskUid);
     }
 
     async archiveListing(postId: number, archived: boolean) {
-        const task = await this.meiliSearch.index('listings').updateDocuments([
-            {
-                id: postId,
-                archived,
-                lastUpdated: Math.floor(Date.now() / 1000)
-            }
-        ]);
+        const task = await this.meiliSearch
+            .index(process.env.MEILISEARCH_BUCKET_NAME)
+            .updateDocuments([
+                {
+                    id: postId,
+                    archived,
+                    lastUpdated: Math.floor(Date.now() / 1000)
+                }
+            ]);
 
         await this.meiliSearch.waitForTask(task.taskUid);
     }
@@ -321,12 +333,14 @@ export class ListingsService {
             return false;
         }
 
-        const task = await this.meiliSearch.index('listings').updateDocuments([
-            {
-                id: post.id,
-                images: [...post.images, res.url]
-            }
-        ]);
+        const task = await this.meiliSearch
+            .index(process.env.MEILISEARCH_BUCKET_NAME)
+            .updateDocuments([
+                {
+                    id: post.id,
+                    images: [...post.images, res.url]
+                }
+            ]);
 
         await this.meiliSearch.waitForTask(task.taskUid);
 
@@ -346,12 +360,14 @@ export class ListingsService {
             }
         }
 
-        const task = await this.meiliSearch.index('listings').updateDocuments([
-            {
-                id: post.id,
-                images: post.images.filter((url) => !images.includes(url))
-            }
-        ]);
+        const task = await this.meiliSearch
+            .index(process.env.MEILISEARCH_BUCKET_NAME)
+            .updateDocuments([
+                {
+                    id: post.id,
+                    images: post.images.filter((url) => !images.includes(url))
+                }
+            ]);
 
         await this.meiliSearch.waitForTask(task.taskUid);
 

@@ -5,6 +5,7 @@ declare global {
             DATABASE_URL: string;
             MEILISEARCH_URL: string;
             MEILISEARCH_KEY: string;
+            MEILISEARCH_BUCKET_NAME: string;
             SMTP_SERVER: string;
             SMTP_NOREPLY_EMAIL: string;
             SMTP_NOREPLY_NAME: string;
