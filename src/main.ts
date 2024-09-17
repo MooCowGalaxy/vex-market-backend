@@ -23,7 +23,10 @@ async function bootstrap() {
         credentials: true
     });
 
-    await app.listen(process.env.PORT ? parseInt(process.env.PORT) : 3000);
+    await app.listen(
+        process.env.PORT ? parseInt(process.env.PORT) : 3000,
+        process.env.LISTEN_ADDRESS
+    );
 }
 
 bootstrap().then();

@@ -10,7 +10,9 @@ declare global {
             SMTP_NOREPLY_EMAIL: string;
             SMTP_NOREPLY_NAME: string;
             SMTP_PASSWORD: string;
+            LISTEN_ADDRESS: string;
             PORT: string;
+            WEBSOCKET_PORT: string;
             BUNNY_API_KEY: string;
             BUNNY_ZONE_NAME: string;
             BUNNY_DOMAIN: string;

@@ -18,7 +18,7 @@ import {
 } from './messages.types';
 import { forwardRef, Inject } from '@nestjs/common';
 
-@WebSocketGateway(3001, {
+@WebSocketGateway(parseInt(process.env.WEBSOCKET_PORT), {
     cors: {
         origin: '*'
     }
