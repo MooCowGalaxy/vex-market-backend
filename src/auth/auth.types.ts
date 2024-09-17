@@ -14,6 +14,7 @@ export type GetUserResult = Result & {
     userId?: number;
     firstName?: string;
     lastName?: string;
+    email?: string;
     notifications?: number;
 };
 
@@ -47,6 +48,15 @@ export const verifySchema = z
     .required();
 
 export type VerifyBody = z.infer<typeof verifySchema>;
+
+// POST /auth/update
+export const updatePasswordSchema = z
+    .object({
+        password: z.string().min(8).max(200).refine(passwordReq)
+    })
+    .required();
+
+export type UpdatePasswordBody = z.infer<typeof updatePasswordSchema>;
 
 // POST /auth/reset
 export const resetPasswordSchema = z

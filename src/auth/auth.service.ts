@@ -116,30 +116,38 @@ export class AuthService {
         });
     }
 
-    // updates the password hash and sends an email, then deletes the reset token
-    async resetPassword(token: ResetToken, newPassword: string) {
+    // updates password of a user
+    async updatePassword(userId: number, newPassword: string, logout = true) {
         await this.prisma.user.update({
             where: {
-                id: token.userId
+                id: userId
             },
             data: {
                 passwordHash: await hash(newPassword, 9)
             }
         });
 
+        // log out user from all sessions
+        if (logout) {
+            await this.prisma.token.deleteMany({
+                where: {
+                    userId: userId
+                }
+            });
+        }
+
+        // TODO: send email notification
+        // TODO: disconnect all user sessions from WS
+    }
+
+    // updates the password hash and sends an email, then deletes the reset token
+    async resetPassword(token: ResetToken, newPassword: string) {
+        await this.updatePassword(token.userId, newPassword);
+
         await this.prisma.resetToken.delete({
             where: {
                 id: token.id
             }
         });
-
-        await this.prisma.token.deleteMany({
-            where: {
-                userId: token.userId
-            }
-        });
-
-        // TODO: send email notification
-        // TODO: disconnect all user sessions from WS
     }
 }

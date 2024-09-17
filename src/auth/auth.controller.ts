@@ -35,6 +35,7 @@ export class AuthController {
             userId: user.id,
             firstName: user.firstName,
             lastName: user.lastName,
+            email: user.email,
             notifications
         };
     }
@@ -135,6 +136,20 @@ export class AuthController {
                 error: 'Invalid verification token.'
             };
         }
+
+        return {
+            success: true
+        };
+    }
+
+    @Post('/password')
+    @HttpCode(200)
+    async updatePassword(
+        @AuthUser() user: User,
+        @Body(new ZodValidationPipe(types.updatePasswordSchema))
+        postData: types.UpdatePasswordBody
+    ): Promise<Result> {
+        await this.authService.updatePassword(user.id, postData.password);
 
         return {
             success: true
