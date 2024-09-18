@@ -13,7 +13,6 @@ const transporterOptions = {
     },
     from: `"${process.env.SMTP_NOREPLY_NAME}" <${process.env.SMTP_NOREPLY_EMAIL}>`
 };
-console.log(transporterOptions);
 
 const transporter = createTransport(transporterOptions);
 const RABBIT_QUEUE = process.env.RABBIT_QUEUE || 'vex_mail';
