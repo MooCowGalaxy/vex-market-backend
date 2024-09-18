@@ -17,6 +17,7 @@ import {
     wsListenSchema
 } from './messages.types';
 import { forwardRef, Inject } from '@nestjs/common';
+import { User } from '@prisma/client';
 
 @WebSocketGateway(parseInt(process.env.WEBSOCKET_PORT), {
     cors: {
@@ -127,6 +128,14 @@ export class MessagesGateway
             authorName,
             message,
             image
+        });
+    }
+
+    disconnectUser(user: User) {
+        this.server.sockets.sockets.forEach((socket: Socket) => {
+            if (socket.data && socket.data.user.id === user.id) {
+                socket.disconnect();
+            }
         });
     }
 }

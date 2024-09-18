@@ -2,6 +2,7 @@ declare global {
     namespace NodeJS {
         interface ProcessEnv {
             MODE: 'dev' | 'prod';
+            BASE_URL: string;
             DATABASE_URL: string;
             MEILISEARCH_URL: string;
             MEILISEARCH_KEY: string;
@@ -16,6 +17,8 @@ declare global {
             BUNNY_API_KEY: string;
             BUNNY_ZONE_NAME: string;
             BUNNY_DOMAIN: string;
+            RABBIT_URL: string;
+            RABBIT_QUEUE: string;
         }
     }
 }

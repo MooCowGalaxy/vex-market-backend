@@ -13,6 +13,7 @@ import { MessagesController } from './messages/messages.controller';
 import { MessagesGateway } from './messages/messages.gateway';
 import { MessagesService } from './messages/messages.service';
 import { ScheduleModule } from '@nestjs/schedule';
+import { MailService } from './db/mail.service';
 
 @Module({
     imports: [
@@ -37,7 +38,8 @@ import { ScheduleModule } from '@nestjs/schedule';
         ListingsService,
         CdnService,
         MessagesService,
-        MessagesGateway
+        MessagesGateway,
+        MailService
     ]
 })
 export class AppModule {

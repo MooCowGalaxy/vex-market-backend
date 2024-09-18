@@ -4,10 +4,16 @@ import { User, ResetToken } from '@prisma/client';
 import { compare, hash } from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { sleep } from '../utils';
+import { MailService } from '../db/mail.service';
+import { MessagesGateway } from '../messages/messages.gateway';
 
 @Injectable()
 export class AuthService {
-    constructor(private prisma: PrismaService) {}
+    constructor(
+        private prisma: PrismaService,
+        private mailService: MailService,
+        private messagesGateway: MessagesGateway
+    ) {}
 
     // returns user with specified email or null if it doesn't exist
     findUserByEmail(email: string): Promise<User | null> {
@@ -37,7 +43,12 @@ export class AuthService {
             }
         });
 
-        // TODO: send email notification
+        if (user) {
+            await this.mailService.sendRegistrationSuccessEmail(
+                user.email,
+                user.firstName
+            );
+        }
 
         return user;
     }
@@ -71,9 +82,7 @@ export class AuthService {
 
         const token = randomBytes(32).toString('hex');
 
-        // TODO: send email async
-
-        return this.prisma.user.create({
+        const user = await this.prisma.user.create({
             data: {
                 email: email,
                 passwordHash: await hash(password, 9),
@@ -83,6 +92,10 @@ export class AuthService {
                 verifyToken: token
             }
         });
+
+        await this.mailService.sendRegistrationEmail(email, firstName, token);
+
+        return user;
     }
 
     // gets the user from email and sends a password reset email if it exists
@@ -100,7 +113,11 @@ export class AuthService {
                 }
             });
 
-            // TODO: send mail async
+            await this.mailService.sendPasswordResetEmail(
+                email,
+                user.firstName,
+                token
+            );
         } else {
             // timing attack
             await sleep(20);
@@ -118,7 +135,7 @@ export class AuthService {
 
     // updates password of a user
     async updatePassword(userId: number, newPassword: string, logout = true) {
-        await this.prisma.user.update({
+        const user = await this.prisma.user.update({
             where: {
                 id: userId
             },
@@ -134,10 +151,15 @@ export class AuthService {
                     userId: userId
                 }
             });
+
+            // disconnect user from websocket
+            this.messagesGateway.disconnectUser(user);
         }
 
-        // TODO: send email notification
-        // TODO: disconnect all user sessions from WS
+        await this.mailService.sendPasswordResetNotificationEmail(
+            user.email,
+            user.firstName
+        );
     }
 
     // updates the password hash and sends an email, then deletes the reset token
