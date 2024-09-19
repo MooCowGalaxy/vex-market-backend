@@ -10,8 +10,7 @@ const transporterOptions = {
     auth: {
         user: process.env.SMTP_NOREPLY_EMAIL,
         pass: process.env.SMTP_PASSWORD
-    },
-    from: `"${process.env.SMTP_NOREPLY_NAME}" <${process.env.SMTP_NOREPLY_EMAIL}>`
+    }
 };
 
 const transporter = createTransport(transporterOptions);

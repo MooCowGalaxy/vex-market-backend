@@ -192,10 +192,10 @@ export class AuthController {
 
     @Post('/reset/:token')
     @HttpCode(200)
-    @UsePipes(new ZodValidationPipe(types.useResetTokenSchema))
     async useResetToken(
         @Param('token') resetToken: string,
-        @Body() postData: types.UseResetTokenBody,
+        @Body(new ZodValidationPipe(types.useResetTokenSchema))
+        postData: types.UseResetTokenBody,
         @Res({ passthrough: true }) response: Response
     ): Promise<Result> {
         const token = await this.authService.getPasswordReset(resetToken);

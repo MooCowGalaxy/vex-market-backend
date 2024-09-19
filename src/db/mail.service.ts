@@ -42,9 +42,19 @@ export class MailService implements OnModuleInit {
         });
     }
 
-    async sendMail(recipient: string, subject: string, content: string) {
+    async sendMail(
+        recipientEmail: string,
+        recipientName: string,
+        subject: string,
+        content: string
+    ) {
         const mail = {
-            to: recipient,
+            from: process.env.SMTP_NOREPLY_EMAIL,
+            to: recipientEmail,
+            envelope: {
+                from: `${process.env.SMTP_NOREPLY_NAME} <${process.env.SMTP_NOREPLY_EMAIL}>`,
+                to: `${recipientName} <${recipientEmail}>`
+            },
             subject,
             text: content
             // html: convertTextToHtmlEmail(content)
@@ -63,10 +73,12 @@ export class MailService implements OnModuleInit {
     async sendRegistrationEmail(
         recipient: string,
         firstName: string,
+        lastName: string,
         token: string
     ) {
         await this.sendMail(
             recipient,
+            `${firstName} ${lastName}`,
             'Verify your email for VEX Market',
             `Hi ${firstName}!
 
@@ -80,9 +92,14 @@ The VEX Market Team`
         );
     }
 
-    async sendRegistrationSuccessEmail(recipient: string, firstName: string) {
+    async sendRegistrationSuccessEmail(
+        recipient: string,
+        firstName: string,
+        lastName: string
+    ) {
         await this.sendMail(
             recipient,
+            `${firstName} ${lastName}`,
             'Account created for VEX Market',
             `Hi ${firstName}!
 
@@ -96,10 +113,12 @@ The VEX Market Team`
     async sendPasswordResetEmail(
         recipient: string,
         firstName: string,
+        lastName: string,
         token: string
     ) {
         await this.sendMail(
             recipient,
+            `${firstName} ${lastName}`,
             'Reset password for your VEX Market account',
             `Hi ${firstName}!
 
@@ -115,10 +134,12 @@ The VEX Market Team`
 
     async sendPasswordResetNotificationEmail(
         recipient: string,
-        firstName: string
+        firstName: string,
+        lastName: string
     ) {
         await this.sendMail(
             recipient,
+            `${firstName} ${lastName}`,
             'Password Successfully Updated',
             `Hi ${firstName}!
 

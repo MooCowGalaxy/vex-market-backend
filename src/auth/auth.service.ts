@@ -46,7 +46,8 @@ export class AuthService {
         if (user) {
             await this.mailService.sendRegistrationSuccessEmail(
                 user.email,
-                user.firstName
+                user.firstName,
+                user.lastName
             );
         }
 
@@ -93,7 +94,12 @@ export class AuthService {
             }
         });
 
-        await this.mailService.sendRegistrationEmail(email, firstName, token);
+        await this.mailService.sendRegistrationEmail(
+            email,
+            firstName,
+            lastName,
+            token
+        );
 
         return user;
     }
@@ -116,6 +122,7 @@ export class AuthService {
             await this.mailService.sendPasswordResetEmail(
                 email,
                 user.firstName,
+                user.lastName,
                 token
             );
         } else {
@@ -158,7 +165,8 @@ export class AuthService {
 
         await this.mailService.sendPasswordResetNotificationEmail(
             user.email,
-            user.firstName
+            user.firstName,
+            user.lastName
         );
     }
 

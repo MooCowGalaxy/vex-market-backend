@@ -133,7 +133,7 @@ export class MessagesGateway
 
     disconnectUser(user: User) {
         this.server.sockets.sockets.forEach((socket: Socket) => {
-            if (socket.data && socket.data.user.id === user.id) {
+            if (socket.data?.user?.id === user.id) {
                 socket.disconnect();
             }
         });
