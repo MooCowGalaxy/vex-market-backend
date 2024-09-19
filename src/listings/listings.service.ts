@@ -121,7 +121,7 @@ export class ListingsService {
         }
 
         const result = await this.meiliSearch
-            .index('listings')
+            .index(process.env.MEILISEARCH_BUCKET_NAME)
             .search(query, opts);
 
         return {
@@ -171,7 +171,7 @@ export class ListingsService {
         };
 
         const task = await this.meiliSearch
-            .index('listings')
+            .index(process.env.MEILISEARCH_BUCKET_NAME)
             .addDocuments([document]);
 
         await this.meiliSearch.waitForTask(task.taskUid);
@@ -235,7 +235,7 @@ export class ListingsService {
         if (!post) return null;
 
         const document: types.PostDocument = await this.meiliSearch
-            .index('listings')
+            .index(process.env.MEILISEARCH_BUCKET_NAME)
             .getDocument(postId);
 
         if (!document) return null;
@@ -302,7 +302,7 @@ export class ListingsService {
         // delete from meili
         try {
             const task = await this.meiliSearch
-                .index('listings')
+                .index(process.env.MEILISEARCH_BUCKET_NAME)
                 .deleteDocument(post.id);
             await this.meiliSearch.waitForTask(task.taskUid);
         } catch (e) {
