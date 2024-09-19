@@ -5,6 +5,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import * as cookieParser from 'cookie-parser';
 import type { NestExpressApplication } from '@nestjs/platform-express';
+import { HttpExceptionFilter } from './http-exception.filter';
 
 async function bootstrap() {
     const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -22,6 +23,7 @@ async function bootstrap() {
         ],
         credentials: true
     });
+    app.useGlobalFilters(new HttpExceptionFilter());
 
     await app.listen(
         process.env.PORT ? parseInt(process.env.PORT) : 3000,
