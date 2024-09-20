@@ -13,9 +13,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
         const response = ctx.getResponse<Response>();
         const status = exception.getStatus();
 
-        response.status(status).json({
-            success: false,
-            error: 'Internal server error, please try again later'
-        });
+        if (!response.headersSent) {
+            response.status(status).json({
+                success: false,
+                error: 'Internal server error, please try again later'
+            });
+        }
     }
 }
