@@ -287,19 +287,13 @@ export class ListingsController {
         for (const image of postData.images) {
             const index = remainingImages.indexOf(image);
             if (index === -1) {
+                response.status(404);
                 return {
                     success: false,
                     error: `Image URL ${image} not found`
                 };
             }
             deletedImages.push(...remainingImages.splice(index, 1));
-        }
-
-        if (remainingImages.length === 0) {
-            return {
-                success: false,
-                error: 'Cannot delete all images'
-            };
         }
 
         const res = await this.listingsService.deleteImages(
