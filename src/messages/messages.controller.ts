@@ -301,7 +301,7 @@ export class MessagesController {
             response.status(500);
             return {
                 success: false,
-                error: 'Something went wrong while sending the message.'
+                error: `Something went wrong while sending the message.`
             };
         }
 
@@ -309,7 +309,7 @@ export class MessagesController {
             response.status(403);
             return {
                 success: false,
-                error: 'Insufficient permissions to send image'
+                error: `Insufficient permissions to send image: Your user ID: ${user.id}, allowed user IDs: [${chat.sellerId}, ${chat.buyerId}]`
             };
         }
 
