@@ -305,11 +305,11 @@ export class MessagesController {
             };
         }
 
-        if (chat.sellerId !== user.id || chat.buyerId !== user.id) {
+        if (chat.sellerId !== user.id && chat.buyerId !== user.id) {
             response.status(403);
             return {
                 success: false,
-                error: `Insufficient permissions to send image: Your user ID: ${user.id}, allowed user IDs: [${chat.sellerId}, ${chat.buyerId}]`
+                error: `Insufficient permissions to send image.`
             };
         }
 
