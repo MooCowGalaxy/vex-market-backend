@@ -305,7 +305,7 @@ export class MessagesController {
             };
         }
 
-        if (chat.seller.id !== user.id) {
+        if (chat.seller.id !== user.id || chat.buyer.id !== user.id) {
             response.status(403);
             return {
                 success: false,
