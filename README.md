@@ -1,75 +1,62 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
-
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
-
-## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Installation
-
+# VEX Market Backend
+Backend service for VEX Market, handling user authentication, listings, messaging, file uploads, and other business logic.
+## Features
+- RESTful API endpoints for frontend functionality
+- Real-time WebSocket server using socket.io for messaging
+- File upload handling to Bunny.net CDN
+- Email notification system with retry capabilities
+- Search indexing with Meilisearch
+## Getting Started
+### Prerequisites
+- Node.js 20.x or higher
+- PostgreSQL 14.x or higher
+- Bunny.net storage bucket and public endpoint for CDN
+- RabbitMQ instance for mail delivery queue
+- Meilisearch instance
+- SMTP server
+### Installation
+1. Clone the repository:
 ```bash
-$ npm install
+git clone https://github.com/MooCowGalaxy/vex-market-backend.git
 ```
-
-## Running the app
-
+2. Install dependencies:
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+cd vex-market-backend
+npm install
 ```
-
-## Test
-
+3. Copy `.env.example` to `.env` and edit the variables
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+cp .env.example .env
+nano .env  # or your favorite CLI text editor
 ```
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If
-you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](LICENSE).
+4. Run database migrations:
+```bash
+npx prisma migrate dev
+```
+5. Start the server:
+```bash
+npm run start:dev
+```
+The server will be running at http://localhost:3000 by default, but the port can be specified in `.env`
+## Project Structure
+```
+data/                   # US city names and ZIP codes
+mailer/
+  └── process-queue.ts  # worker process to handle mail delivery from RabbitMQ - can run multiple instances
+prisma/                 # Database schema definition and SQL migration files
+scripts/
+  └── addZipPrisma.js   # Add US cities and zip codes from `data/USCities.json` to the database
+src/
+  ├── auth/             # User account routes
+  ├── db/               # Databse connector
+  ├── listings/         # Listing routes
+  ├── location/         # ZIP/city lookup routes
+  └── messages/         # WebSocket server + messaging routes
+```
+## Technologies Used
+- Nest.js
+- TypeScript
+- PostgreSQL with Prisma.js ORM
+- Socket.io
+- RabbitMQ
+- Meilisearch
