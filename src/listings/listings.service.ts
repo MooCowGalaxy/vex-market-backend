@@ -69,7 +69,7 @@ export class ListingsService {
                   ]
                 : [`type IN [local, both]`],
             sort: [`lastUpdated:desc`],
-            limit: 5
+            limit: 10
         };
 
         return (
@@ -83,7 +83,7 @@ export class ListingsService {
         const opts = {
             filter: [`type IN [shipping, both]`, `archived = false`],
             sort: [`lastUpdated:desc`],
-            limit: 5
+            limit: 10
         };
 
         return (
